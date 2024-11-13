@@ -42,39 +42,49 @@ async function grantAccess() {
 
 function insertButtonWhenModalOpened() {
   const buttonId = "accessButton";
-  document.body.addEventListener("DOMNodeInserted", (e) => {
-    const div = e.target;
-    if (!div || div.nodeName !== "DIV") {
-      return;
-    }
-    const title = div.querySelector(".ant-modal-title");
-    if (
-      !title ||
-      !title.childNodes[0] ||
-      !title.childNodes[1].innerText.includes('dashboard') ||
-      title.childNodes[0].textContent !== "Manage Permissions"
-    ) {
-      return;
-    }
-    const parent = div.querySelector(".ant-modal-body");
-    if (!parent || parent.querySelector(`#${buttonId}`)) {
-      return;
-    }
 
-    const container = document.createElement("div");
-    container.id = `${buttonId}`;
-    container.style.display = "flex";
-    container.style.alignItems = "center";
+  const observer = new MutationObserver((mutationsList) => {
+    for (let mutation of mutationsList) {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeName !== "DIV") {
+            return;
+          }
+          const title = node.querySelector(".ant-modal-title");
+          if (
+            !title ||
+            !title.childNodes[0] ||
+            !title.childNodes[1].innerText.includes('dashboard') ||
+            title.childNodes[0].textContent !== "Manage Permissions"
+          ) {
+            return;
+          }
+          const parent = node.querySelector(".ant-modal-body");
+          if (!parent || parent.querySelector(`#${buttonId}`)) {
+            return;
+          }
 
-    const button = document.createElement("button");
-    button.className = "btn btn-sm hidden-xs btn-default";
-    button.style.marginRight = "8px";
-    button.textContent = "Grant access to all queries";
-    button.addEventListener("click", grantAccess);
-    container.appendChild(button);
+          const container = document.createElement("div");
+          container.id = `${buttonId}`;
+          container.style.display = "flex";
+          container.style.alignItems = "center";
 
-    parent.appendChild(container);
+          const button = document.createElement("button");
+          button.className = "btn btn-sm hidden-xs btn-default";
+          button.style.marginRight = "8px";
+          button.textContent = "Grant access to all queries";
+          button.addEventListener("click", () => grantAccess());
+
+          container.appendChild(button);
+
+          parent.appendChild(container);
+        });
+      }
+    }
   });
+
+  const config = { childList: true, subtree: true };
+  observer.observe(document.body, config);
 }
 
 insertButtonWhenModalOpened();
